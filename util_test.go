@@ -25,38 +25,43 @@
 package kvl
 
 import (
-	"os"
+	"testing"
 )
 
-// FileLogger is pure sink will print log lines to a file or pseudo-file.
-// Initialise with os.Stdout for example, to obtain a stdout logger.
-// Beware that only string arguments are supported: Printf will ignore
-// any extra arguments and other types will simply be skipped over.
-// Printkv ignores keys and only prints all values, separated by a space.
-type FileLogger struct {
-	Output *os.File
-}
+func TestSliceToMap(t *testing.T) {
+	c01 := []interface{}{}
+	r01 := SliceToMap(c01)
+	if len(r01) != 0 {
+		t.Error("t01: result should be empty")
+	}
 
-func (logger *FileLogger) Write(p []byte) (n int, err error) {
-	return logger.Output.Write(p)
-}
+	c02 := []interface{}{ "message" }
+	r02 := SliceToMap(c02)
+	if len(r02) != 0 {
+		t.Error("t02: result should be empty")
+	}
 
-func (logger *FileLogger) Print(v ...interface{}) {
-	for _, line := range v {
-		logger.Write([]byte(line))
+	c03 := []interface{}{ 23, 777 }
+	r03 := SliceToMap(c03)
+	if len(r03) != 0 {
+		t.Error("t03: result should be empty")
+	}
+
+	c04 := []interface{}{ "message", "hello" }
+	r04 := SliceToMap(c04)
+	if len(r04) != 1 {
+		t.Error("t04: result should have one key")
+	}
+	if _, ok := r04["message"]; !ok {
+		t.Error("t04: message key not found")
+	}
+	if r04["message"] != "hello" {
+		t.Error("t04: message has invalid value")
+	}
+
+	c05 := []interface{}{ "message", "hello", "theanswer", 42 }
+	r05 := SliceToMap(c05)
+	if len(r05) != 2 {
+		t.Error("t05: result should have two keys")
 	}
 }
-func (logger *FileLogger) Println(v ...interface{}) {
-	logger.Print(v)
-}
-func (logger *FileLogger) Printf(format string, v ...interface{}) {
-}
-func (logger *FileLogger) Printkv(kv ...interface{}) {
-}
-func (logger *FileLogger) Backers() []Logger {
-}
-func (logger *FileLogger) SetBacker(backing Logger) {
-}
-func (*FileLogger) Head() *Logger {
-}
-

@@ -24,23 +24,16 @@
 
 package kvl
 
-import (
-	"os"
-)
-
-// NewStdLog creates a simple StdOut logger suitable for human consumption.
-// Key-Value pairs are separated by a pipe character: |
-// Each log line is prepended with the current date and time.
-func NewStdLog() Logger {
-	return &ConsoleFilter{
-		Sink: os.Stdout,
-		PrintTime: true,
-		PrintKeys: true,
+// SliceToMap converts a list of interleaved key-value pairs to a map.
+func SliceToMap(kv []interface{}) map[string]interface{} {
+	values := make(map[string]interface{})
+	// take care that we don't overrun - there must be two next arguments
+	for i := 0; i + 1 < len(kv); i += 2 {
+		key, ok := kv[i].(string)
+		// ignore non-string keys
+		if ok {
+			values[key] = kv[i + 1]
+		}
 	}
-}
-
-// NewJsonLog creates a JSON logger that places the message into the
-// 'message' key and adds a 'time' key with the current time in RFC3339 format.
-func NewJsonLog() Logger {
-	return nil
+	return values
 }

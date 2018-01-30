@@ -44,15 +44,46 @@ logger.Printkv("message", "Bottles on the wall", "count", 99, "content", "beer")
 
 ## Mix, Match + Extend
 
-Each logger can act as both source, sink and filter for other loggers.
+Loggers can be connected to form a processing chain.
+These chains are highly customisable through standard interfaces:
 
-Chain them together to create a logger customised to *your* application!
+Sources, Filters and Sinks.
+
+Individual loggers can act as one or more of these.
 
 For the lazy, a number of ready-to-use chains are provided. Take a look at
 [convenience.go](convenience.go) to get started.
 
-If you would prefer to write your own loggers and sinks, please look at the
-interface declaration in [logger.go](logger.go).
+If you would rather write your own loggers and processing chains, please look at the
+interface declarations in [logger.go](logger.go). Note that the
+interfaces closely follow established standards to allow reuse of
+existing APIs.
+
+### Sources
+
+A source provides a logging interface to applications.
+
+Its API is based on the `log` standard package and ideads from [logxi](https://github.com/mgutz/logxi),
+but in contrast to them, no log levels or side-effects are provided.
+If such functionality is desired, it can be added easily through a custom source.
+
+### Filters
+
+Filters are intended as intermediate elements in a more complex chain.
+They can be used to enhance log message with additional information or
+format messages in specific ways.
+
+For example, one filter could interpret a key 'level' as the
+log level and filter messages below a threshold.
+Or, a filter could process messages into coloured text, depending
+on flags, keys or a log level.
+
+### Sinks
+
+Ultimately, all data needs to end up somewhere (or be discarded).
+
+A sink is nothing more than an `io.Writer` - which means you can
+attach open files, stdout, network sockets and other things.
 
 ## Copyright + License
 

@@ -24,16 +24,9 @@
 
 package kvl
 
-// Logger is a generic type for all loggers.
-// You should provide a reasonable implementation for all functions, to allow
-// full interchangeability of individual loggers.
-// If a particular function makes no sense, provide
-// a minimal implementation that preserves as much information as possible.
+// Logger is the standard interface for a log source.
+// Specific implementations may add more methods.
 type Logger interface {
-	// Write outputs an encoded string.
-	// Sinks should handle this method, other loggers should simply pass it
-	// on to their children.
-	Write(p []byte) (n int, err error)
 	// Print outputs each argument on a separate log line.
 	Print(v ...interface{})
 	// Println is simply an alias for Print,
@@ -44,21 +37,25 @@ type Logger interface {
 	// is sent through kvl.Print.
 	Printf(format string, v ...interface{})
 	// Printkv expects a list of alternating key-value pairs.
+	// Only string keys are supported; incompatible keys will be ignored.
 	// The output format depends on the chosen logger chain.
 	// For example, a JsonLogger outputs in JSON format, while
 	// a StdLogger displays in a more human-readable fashion.
+	// If available, the key 'message' will be used for the log message.
+	// The same applies to 'time', which will override anything that uses the current time.
 	Printkv(kv ...interface{})
-	// Backers returns a list of all backing loggers attached to this logger.
-	// How they are used depends on the specific logger.
-	// Most loggers will have only a single Next entry, while pure sinks
-	// have none.
-	Backers() []Logger
-	// SetBacker assigns the backing logger.
-	// If multiple backing loggers are supported, this assigns the 'main'
-	// logger. Additional functions should be provided by the logger to configure others.
-	SetBacker(backing Logger)
-	// Head returns a pointer to the last 'main' logger in a chain.
-	// This is usually a pure sink and Head can be used to update the final destination.
-	// Secondary loggers can not be reached with this function.
-	Head() *Logger
+}
+
+// Filter is the standard interface for a data processor.
+// It allows extending and enhancing a log chain with additional functionality.
+// The interface is simply a combination of a source and a sink.
+type Filter interface {
+	Logger
+	Sink
+}
+
+// Sink is the standard interface for a log sink.
+// It is simply an alias to io.Writer.
+type Sink interface {
+	Write(p []byte) (n int, err error)
 }

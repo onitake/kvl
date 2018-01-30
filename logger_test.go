@@ -25,22 +25,18 @@
 package kvl
 
 import (
-	"os"
+	"testing"
+	"bytes"
 )
 
-// NewStdLog creates a simple StdOut logger suitable for human consumption.
-// Key-Value pairs are separated by a pipe character: |
-// Each log line is prepended with the current date and time.
-func NewStdLog() Logger {
-	return &ConsoleFilter{
-		Sink: os.Stdout,
-		PrintTime: true,
-		PrintKeys: true,
+func TestConsoleLogger(t *testing.T) {
+	q01 := "test message"
+	r01 := &bytes.Buffer{}
+	t01 := &ConsoleFilter{
+		Sink: r01,
 	}
-}
-
-// NewJsonLog creates a JSON logger that places the message into the
-// 'message' key and adds a 'time' key with the current time in RFC3339 format.
-func NewJsonLog() Logger {
-	return nil
+	t01.Print(q01)
+	if !bytes.Equal(r01.Bytes(), []byte(q01 + "\n")) {
+		t.Error("t01: log result and output are not equal")
+	}
 }
