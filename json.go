@@ -26,13 +26,30 @@ package kvl
 
 import (
 	"io"
+	"encoding/json"
+)
+
+const (
+	jsonEncodeError = "{\"error\":\"Cannot encode log line\"}\n"
 )
 
 // JsonFormatter formats each log line into JSON and sends it to a Sink.
 type JsonFormatter struct {
-	Sink io.Writer
+	sink io.Writer
+	encoder *json.Encoder
+}
+
+// JsonFormatter creates a new JSON formatter and assigns its Sink.
+// If you ever need to change the Sink, it is best create a new Formatter.
+func NewJsonFormatter(sink io.Writer) *JsonFormatter {
+	return &JsonFormatter{
+		encoder: json.NewEncoder(sink),
+	}
 }
 
 func (formatter *JsonFormatter) Logkv(kv map[string]interface{}) {
-	
+	err := formatter.encoder.Encode(kv)
+	if err != nil {
+		formatter.sink.Write([]byte(jsonEncodeError))
+	}
 }

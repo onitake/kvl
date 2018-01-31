@@ -25,26 +25,44 @@
 package kvl
 
 import (
-	"os"
+	"testing"
+	"bytes"
 )
 
-// NewStdLog creates a simple StdOut logger suitable for human consumption.
-// Key-Value pairs are separated by a pipe character: |
-// Each log line is prepended with the current date and time.
-func NewStdLog() *SimpleLogger {
-	return &SimpleLogger{
-		Chain: &ConsoleFormatter{
-			Sink: os.Stdout,
-			PrintTime: true,
-			PrintKeys: true,
-		},
+func jsonTest(t *testing.T, testno string, query map[string]interface{}, expected ...[]byte) {
+	buffer := &bytes.Buffer{}
+	testee := NewJsonFormatter(buffer)
+	testee.Logkv(query)
+	result := buffer.Bytes()
+	ok := false
+	for _, ex1 := range expected {
+		if bytes.Equal(ex1, result) {
+			ok = true
+		} else {
+			t.Logf("%s: no match. expected: '%s' got: '%s'", testno, ex1, result)
+		}
+	}
+	if !ok {
+		t.Errorf("%s: no matching result", testno)
 	}
 }
 
-// NewJsonLog creates a JSON logger that places each message into the
-// 'message' key and adds a 'time' key with the current time in RFC3339 format.
-func NewJsonLog() *SimpleLogger {
-	return &SimpleLogger{
-		Chain: NewJsonFormatter(os.Stdout),
+func TestJsonFormatter(t *testing.T) {
+	q01 := map[string]interface{}{}
+	x01 := []byte("{}\n")
+	jsonTest(t, "t01", q01, x01)
+
+	q02 := map[string]interface{}{
+		"message": "test 02",
 	}
+	x02 := []byte("{\"message\":\"test 02\"}\n")
+	jsonTest(t, "t02", q02, x02)
+
+	q03 := map[string]interface{}{
+		"message": "test 03",
+		"value": 1234567,
+	}
+	x03a := []byte("{\"value\":1234567,\"message\":\"test 03\"}\n")
+	x03b := []byte("{\"message\":\"test 03\",\"value\":1234567}\n")
+	jsonTest(t, "t03", q03, x03a, x03b)
 }
