@@ -24,11 +24,15 @@
 
 package kvl
 
-const (
-	// StdMessageKey is the default key to use for log messages.
-	// Type: string
-	StdMessageKey = "message"
-	// StdTimeKey is the default key to use for timestamps.
-	// Type: time.Time
-	StdTimeKey = "time"
+import (
+	"io"
 )
+
+// JsonFormatter formats each log line into JSON and sends it to a Sink.
+type JsonFormatter struct {
+	Sink io.Writer
+}
+
+func (formatter *JsonFormatter) Logkv(kv map[string]interface{}) {
+	
+}

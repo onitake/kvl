@@ -25,18 +25,43 @@
 package kvl
 
 import (
-	"testing"
-	"bytes"
+	"fmt"
 )
 
-func TestConsoleLogger(t *testing.T) {
-	q01 := "test message"
-	r01 := &bytes.Buffer{}
-	t01 := &ConsoleFilter{
-		Sink: r01,
+// SimpleLogger is a very basic log frontend that packs strings into a map
+// and passes them to a Filter.
+//
+// The Print* family of log methods are modeled after log.Logger.
+type SimpleLogger struct {
+	Chain Filter
+}
+
+// Print outputs each argument on a separate log line.
+func (logger *SimpleLogger) Print(v ...interface{}) {
+	for _, line := range v {
+		logger.Chain.Logkv(map[string]interface{}{
+			"message": line,
+		})
 	}
-	t01.Print(q01)
-	if !bytes.Equal(r01.Bytes(), []byte(q01 + "\n")) {
-		t.Error("t01: log result and output are not equal")
-	}
+}
+
+// Println is simply an alias for Print, as log messages are always terminated with a newline.
+// Provided for compatibility with log.Logger.
+func (logger *SimpleLogger) Println(v ...interface{}) {
+	logger.Print(v)
+}
+
+// Printf formats a string like log.Printf does, then logs it as a single
+// log line.
+func (logger *SimpleLogger) Printf(format string, v ...interface{}) {
+	message := fmt.Sprintf(format, v)
+	logger.Print(message)
+}
+
+// Printkv packs a list of key-value pairs and sends it to the Filter chain.
+// Only string keys are supported; incompatible keys or a missing value
+// at the end will be silently ignored.
+func (logger *SimpleLogger) Printkv(kv ...interface{}) {
+	mkv := SliceToMap(kv)
+	logger.Chain.Logkv(mkv)
 }

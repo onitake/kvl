@@ -24,11 +24,38 @@
 
 package kvl
 
-const (
-	// StdMessageKey is the default key to use for log messages.
-	// Type: string
-	StdMessageKey = "message"
-	// StdTimeKey is the default key to use for timestamps.
-	// Type: time.Time
-	StdTimeKey = "time"
+import (
+	"time"
 )
+
+// Filter is the standard interface for a data processor.
+// This interface is also used in Formatters.
+//
+// Note: The log maps sent through this interface may be modified by
+// anything in the chain. Clone them if you need to keep them.
+// Data will not be modified, however, so a deep copy is not necessary.
+type Filter interface {
+	// Logkv accepts key-value maps, processes them and sends them to the next
+	// Filters or Formatters in the chain.
+	// Or, in the case of a Formatter, to a log Sink.
+	// This function may modify the map, but not its values.
+	Logkv(kv map[string]interface{})
+}
+
+// AddTimeFilter adds the key "time" with the current time
+// and sends the dictionary to the next filter in the chain.
+// If a "time" is already present, it will not be modified.
+type AddTimeFilter struct {
+	Chain Filter
+}
+
+func (filter *AddTimeFilter) Logkv(kv map[string]interface{}) {
+	if filter.Chain != nil {
+		// add the curent time
+		if _, ok := kv[StdTimeKey]; !ok {
+			kv[StdMessageKey] = time.Now()
+		}
+		// pass the map on
+		filter.Chain.Logkv(kv)
+	}
+}

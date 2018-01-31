@@ -31,16 +31,22 @@ import (
 // NewStdLog creates a simple StdOut logger suitable for human consumption.
 // Key-Value pairs are separated by a pipe character: |
 // Each log line is prepended with the current date and time.
-func NewStdLog() Logger {
-	return &ConsoleFilter{
-		Sink: os.Stdout,
-		PrintTime: true,
-		PrintKeys: true,
+func NewStdLog() *SimpleLogger {
+	return &SimpleLogger{
+		Chain: &ConsoleFormatter{
+			Sink: os.Stdout,
+			PrintTime: true,
+			PrintKeys: true,
+		},
 	}
 }
 
-// NewJsonLog creates a JSON logger that places the message into the
+// NewJsonLog creates a JSON logger that places each message into the
 // 'message' key and adds a 'time' key with the current time in RFC3339 format.
-func NewJsonLog() Logger {
-	return nil
+func NewJsonLog() *SimpleLogger {
+	return &SimpleLogger{
+		Chain: &JsonFormatter{
+			Sink: os.Stdout,
+		},
+	}
 }

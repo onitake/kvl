@@ -14,8 +14,8 @@ A light-weight Go logging package.
 Import the package first:
 ```go
 import "github.com/onitake/kvl"
-
 ```
+
 Try a simple console log:
 ```go
 logger := kvl.NewStdLog()
@@ -44,46 +44,62 @@ logger.Printkv("message", "Bottles on the wall", "count", 99, "content", "beer")
 
 ## Mix, Match + Extend
 
-Loggers can be connected to form a processing chain.
-These chains are highly customisable through standard interfaces:
+Each logger is more than just a single class handling all the work:
+Instead, several components are tied together to form a processing chain.
 
-Sources, Filters and Sinks.
+These components can be divided into four categories:
+Frontends, Filters, Formatters and Sinks.
 
-Individual loggers can act as one or more of these.
+Several ready-to-use loggers are defined in [convenience.go](convenience.go),
+they can be used as-is or serve as a starting point for your own loggers.
 
-For the lazy, a number of ready-to-use chains are provided. Take a look at
-[convenience.go](convenience.go) to get started.
+The various interfaces you need to implement are declared in [logger.go](logger.go).
 
-If you would rather write your own loggers and processing chains, please look at the
-interface declarations in [logger.go](logger.go). Note that the
-interfaces closely follow established standards to allow reuse of
-existing APIs.
+### Frontends
 
-### Sources
+A Frontend provides a logging interface to applications.
 
-A source provides a logging interface to applications.
+There are no specific requirements on what the API should look like - it can be
+anything from a simple passthrough implementation of the Filter interface to
+a drop-in replacement for another logger.
 
-Its API is based on the `log` standard package and ideads from [logxi](https://github.com/mgutz/logxi),
-but in contrast to them, no log levels or side-effects are provided.
-If such functionality is desired, it can be added easily through a custom source.
+After preprocessing, the Frontend should pack its output into a map
+and send it to a Filter. See [simple.go](simple.go) for an example.
 
 ### Filters
 
-Filters are intended as intermediate elements in a more complex chain.
-They can be used to enhance log message with additional information or
-format messages in specific ways.
+Filters serve as intermediate elements in a more complex chain.
+They can be used to enhance log message with additional information, filter
+out certain message or format values in specific ways.
 
-For example, one filter could interpret a key 'level' as the
-log level and filter messages below a threshold.
-Or, a filter could process messages into coloured text, depending
-on flags, keys or a log level.
+For example, one Filter could interpret a key 'level' as the
+log level and drop messages below a certain threshold.
+
+Filters should implement the Filter interface and send their output to another
+Filter.
+
+### Formatters
+
+A Formatter processes log messages from a Filter or Frontend into a certain
+output format.
+
+It serves as the glue point between a Logger and the environment, so it should
+implement the Filter interface and send its output to a Sink.
 
 ### Sinks
 
 Ultimately, all data needs to end up somewhere (or be discarded).
+This is where Sinks come in.
 
-A sink is nothing more than an `io.Writer` - which means you can
-attach open files, stdout, network sockets and other things.
+Once the Formatter has processed its data, it will send it through an I/O
+channel, to a remote server or simply write to Stdout.
+
+For most purposes this is best abstracted by the `io.Writer` interface.
+It is used by many standard APIs and can be implemented easily for a custom
+log destination.
+
+If `io.Writer` does not serve your purpose sufficiently, you can also
+write a custom Formatter that sends its data to a different type of Sink.
 
 ## Copyright + License
 
