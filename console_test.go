@@ -25,52 +25,64 @@
 package kvl
 
 import (
-	"testing"
 	"bytes"
 	"fmt"
+	"testing"
 	"time"
 )
 
-func TestConsoleFormatter(t *testing.T) {
-	q01 := "test01 01test"
-	r01 := &bytes.Buffer{}
-	t01 := &ConsoleFormatter{
-		Sink: r01,
+func consoleTest(t *testing.T, testno string, create func() *ConsoleFormatter, query map[string]interface{}, expected ...[]byte) {
+	buffer := &bytes.Buffer{}
+	testee := create()
+	testee.Formatd(query, buffer)
+	result := buffer.Bytes()
+	ok := false
+	for _, ex1 := range expected {
+		if bytes.Equal(ex1, result) {
+			ok = true
+		} else {
+			t.Logf("%s: no match. expected: '%s' got: '%s'", testno, ex1, result)
+		}
 	}
-	t01.Logkv(map[string]interface{}{
-		"message": q01,
-	})
-	if !bytes.Equal(r01.Bytes(), []byte(q01 + "\n")) {
-		t.Error("t01: log result and output are not equal")
+	if !ok {
+		t.Errorf("%s: no matching result", testno)
 	}
+}
 
-	q02 := "test02 02test"
-	r02 := &bytes.Buffer{}
-	t02 := &ConsoleFormatter{
-		Sink: r02,
-		PrintTime: true,
-		PrintKeys: true,
+func TestConsoleFormatter(t *testing.T) {
+	c01 := func() *ConsoleFormatter {
+		return &ConsoleFormatter{}
 	}
-	t02.Logkv(map[string]interface{}{
-		"message": q02,
-	})
-	if !bytes.Equal(r02.Bytes(), []byte(q02 + "\n")) {
-		t.Error("t02: log result and output are not equal")
+	q01 := map[string]interface{}{
+		"message": "test01 01test",
 	}
+	x01 := []byte(fmt.Sprintf("%s\n", q01["message"]))
+	consoleTest(t, "t01", c01, q01, x01)
+
+	c02 := func() *ConsoleFormatter {
+		return &ConsoleFormatter{
+			PrintTime: true,
+			PrintKeys: true,
+		}
+	}
+	q02 := map[string]interface{}{
+		"message": "test02 02test",
+	}
+	x02 := []byte(fmt.Sprintf("%s\n", q02["message"]))
+	consoleTest(t, "t02", c02, q02, x02)
 
 	q03 := "test03 03test"
 	q03k := "testkey03"
 	q03v := "testvalue03"
 	r03 := &bytes.Buffer{}
 	t03 := &ConsoleFormatter{
-		Sink: r03,
 		PrintTime: true,
 		PrintKeys: true,
 	}
-	t03.Logkv(map[string]interface{}{
+	t03.Formatd(map[string]interface{}{
 		"message": q03,
-		q03k: q03v,
-	})
+		q03k:      q03v,
+	}, r03)
 	v03 := q03 + " | " + q03k + ": " + q03v + "\n"
 	if !bytes.Equal(r03.Bytes(), []byte(v03)) {
 		t.Errorf("t03: log result and output are not equal: '%s' vs. '%s'", r03, v03)
@@ -83,15 +95,14 @@ func TestConsoleFormatter(t *testing.T) {
 	q04v2 := 42
 	r04 := &bytes.Buffer{}
 	t04 := &ConsoleFormatter{
-		Sink: r04,
 		PrintTime: true,
 		PrintKeys: true,
 	}
-	t04.Logkv(map[string]interface{}{
+	t04.Formatd(map[string]interface{}{
 		"message": q04,
-		q04k: q04v,
-		q04k2: q04v2,
-	})
+		q04k:      q04v,
+		q04k2:     q04v2,
+	}, r04)
 	// key order is not guaranteed - accept both versions
 	v04a := fmt.Sprintf("%s | %s: %s | %s: %d\n", q04, q04k, q04v, q04k2, q04v2)
 	v04b := fmt.Sprintf("%s | %s: %d | %s: %s\n", q04, q04k2, q04v2, q04k, q04v)
@@ -104,14 +115,13 @@ func TestConsoleFormatter(t *testing.T) {
 	q05v := "testvalue05"
 	r05 := &bytes.Buffer{}
 	t05 := &ConsoleFormatter{
-		Sink: r05,
 		PrintTime: true,
 	}
-	t05.Logkv(map[string]interface{}{
+	t05.Formatd(map[string]interface{}{
 		"message": q05,
-		q05k: q05v,
-	})
-	if !bytes.Equal(r05.Bytes(), []byte(q05 + "\n")) {
+		q05k:      q05v,
+	}, r05)
+	if !bytes.Equal(r05.Bytes(), []byte(q05+"\n")) {
 		t.Error("t05: log result and output are not equal")
 	}
 
@@ -120,14 +130,13 @@ func TestConsoleFormatter(t *testing.T) {
 	q06v := time.Date(2018, 1, 31, 8, 59, 2, 0, time.Local)
 	r06 := &bytes.Buffer{}
 	t06 := &ConsoleFormatter{
-		Sink: r06,
 		PrintTime: true,
 	}
-	t06.Logkv(map[string]interface{}{
+	t06.Formatd(map[string]interface{}{
 		"message": q06,
-		"time": q06v,
-	})
-	if !bytes.Equal(r06.Bytes(), []byte(q06t + q06 + "\n")) {
+		"time":    q06v,
+	}, r06)
+	if !bytes.Equal(r06.Bytes(), []byte(q06t+q06+"\n")) {
 		t.Error("t06: log result and output are not equal")
 	}
 }

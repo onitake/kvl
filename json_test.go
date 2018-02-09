@@ -25,14 +25,14 @@
 package kvl
 
 import (
-	"testing"
 	"bytes"
+	"testing"
 )
 
 func jsonTest(t *testing.T, testno string, query map[string]interface{}, expected ...[]byte) {
 	buffer := &bytes.Buffer{}
-	testee := NewJsonFormatter(buffer)
-	testee.Logkv(query)
+	testee := &JsonFormatter{}
+	testee.Formatd(query, buffer)
 	result := buffer.Bytes()
 	ok := false
 	for _, ex1 := range expected {
@@ -60,7 +60,7 @@ func TestJsonFormatter(t *testing.T) {
 
 	q03 := map[string]interface{}{
 		"message": "test 03",
-		"value": 1234567,
+		"value":   1234567,
 	}
 	x03a := []byte("{\"value\":1234567,\"message\":\"test 03\"}\n")
 	x03b := []byte("{\"message\":\"test 03\",\"value\":1234567}\n")

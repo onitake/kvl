@@ -35,19 +35,19 @@ func TestSliceToMap(t *testing.T) {
 		t.Error("t01: result should be empty")
 	}
 
-	c02 := []interface{}{ "message" }
+	c02 := []interface{}{"message"}
 	r02 := SliceToMap(c02)
 	if len(r02) != 0 {
 		t.Error("t02: result should be empty")
 	}
 
-	c03 := []interface{}{ 23, 777 }
+	c03 := []interface{}{23, 777}
 	r03 := SliceToMap(c03)
 	if len(r03) != 0 {
 		t.Error("t03: result should be empty")
 	}
 
-	c04 := []interface{}{ "message", "hello" }
+	c04 := []interface{}{"message", "hello"}
 	r04 := SliceToMap(c04)
 	if len(r04) != 1 {
 		t.Error("t04: result should have one key")
@@ -59,9 +59,90 @@ func TestSliceToMap(t *testing.T) {
 		t.Error("t04: message has invalid value")
 	}
 
-	c05 := []interface{}{ "message", "hello", "theanswer", 42 }
+	c05 := []interface{}{"message", "hello", "theanswer", 42}
 	r05 := SliceToMap(c05)
 	if len(r05) != 2 {
 		t.Error("t05: result should have two keys")
+	}
+}
+
+func compareIntValues(kv map[int]interface{}, r []int, v []string) bool {
+	ok := true
+	for i, k := range r {
+		if kv[k] != v[i] {
+			ok = false
+		}
+	}
+	return ok
+}
+
+func TestOrderedIntKeys(t *testing.T) {
+	q01 := map[int]interface{}{
+		0: "a",
+		1: "b",
+		2: "c",
+	}
+	c01 := []string{
+		"a",
+		"b",
+		"c",
+	}
+	r01 := OrderedIntKeys(q01)
+	if !compareIntValues(q01, r01, c01) {
+		t.Error("t01: keys are not ordered")
+	}
+	q02 := map[int]interface{}{
+		100: "c",
+		0:   "a",
+		99:  "b",
+	}
+	c02 := []string{
+		"a",
+		"b",
+		"c",
+	}
+	r02 := OrderedIntKeys(q02)
+	if !compareIntValues(q02, r02, c02) {
+		t.Error("t02: keys are not ordered")
+	}
+}
+func compareStringValues(kv map[string]interface{}, r []string, v []string) bool {
+	ok := true
+	for i, k := range r {
+		if kv[k] != v[i] {
+			ok = false
+		}
+	}
+	return ok
+}
+
+func TestOrderedStringKeys(t *testing.T) {
+	q01 := map[string]interface{}{
+		"0": "a",
+		"1": "b",
+		"2": "c",
+	}
+	c01 := []string{
+		"a",
+		"b",
+		"c",
+	}
+	r01 := OrderedStringKeys(q01)
+	if !compareStringValues(q01, r01, c01) {
+		t.Error("t01: keys are not ordered")
+	}
+	q02 := map[string]interface{}{
+		"bbb": "c",
+		"b":   "b",
+		"a":   "a",
+	}
+	c02 := []string{
+		"a",
+		"b",
+		"c",
+	}
+	r02 := OrderedStringKeys(q02)
+	if !compareStringValues(q02, r02, c02) {
+		t.Error("t02: keys are not ordered")
 	}
 }

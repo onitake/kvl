@@ -32,28 +32,29 @@ import (
 // and passes them to a Filter.
 //
 // The Print* family of log methods are modeled after log.Logger.
-type SimpleLogger struct {
-	Chain Filter
+type StdLogger struct {
+	// Yes, we extend Logger.
+	Logger
 }
 
 // Print outputs each argument on a separate log line.
-func (logger *SimpleLogger) Print(v ...interface{}) {
+func (logger *StdLogger) Print(v ...interface{}) {
 	for _, line := range v {
-		logger.Chain.Logkv(map[string]interface{}{
-			"message": line,
+		logger.Printd(map[string]interface{}{
+			StdMessageKey: line,
 		})
 	}
 }
 
 // Println is simply an alias for Print, as log messages are always terminated with a newline.
 // Provided for compatibility with log.Logger.
-func (logger *SimpleLogger) Println(v ...interface{}) {
+func (logger *StdLogger) Println(v ...interface{}) {
 	logger.Print(v)
 }
 
 // Printf formats a string like log.Printf does, then logs it as a single
 // log line.
-func (logger *SimpleLogger) Printf(format string, v ...interface{}) {
+func (logger *StdLogger) Printf(format string, v ...interface{}) {
 	message := fmt.Sprintf(format, v)
 	logger.Print(message)
 }
@@ -61,7 +62,7 @@ func (logger *SimpleLogger) Printf(format string, v ...interface{}) {
 // Printkv packs a list of key-value pairs and sends it to the Filter chain.
 // Only string keys are supported; incompatible keys or a missing value
 // at the end will be silently ignored.
-func (logger *SimpleLogger) Printkv(kv ...interface{}) {
+func (logger *StdLogger) Printkv(kv ...interface{}) {
 	mkv := SliceToMap(kv)
-	logger.Chain.Logkv(mkv)
+	logger.Printd(mkv)
 }

@@ -24,16 +24,46 @@
 
 package kvl
 
+import (
+	"sort"
+)
+
 // SliceToMap converts a list of interleaved key-value pairs to a map.
 func SliceToMap(kv []interface{}) map[string]interface{} {
 	values := make(map[string]interface{})
 	// take care that we don't overrun - there must be two next arguments
-	for i := 0; i + 1 < len(kv); i += 2 {
+	for i := 0; i+1 < len(kv); i += 2 {
 		key, ok := kv[i].(string)
 		// ignore non-string keys
 		if ok {
-			values[key] = kv[i + 1]
+			values[key] = kv[i+1]
 		}
 	}
 	return values
+}
+
+// OrderedIntKeys returns a sorted list of the (int) keys in a map.
+// This is useful for ordered iteration over a map.
+func OrderedIntKeys(m map[int]interface{}) []int {
+	keys := make([]int, len(m))
+	i := 0
+	for k := range m {
+		keys[i] = k
+		i++
+	}
+	sort.Ints(keys)
+	return keys
+}
+
+// OrderedStringKeys returns a sorted list of the (string) keys in a map.
+// This is useful for ordered iteration over a map.
+func OrderedStringKeys(m map[string]interface{}) []string {
+	keys := make([]string, len(m))
+	i := 0
+	for k := range m {
+		keys[i] = k
+		i++
+	}
+	sort.Strings(keys)
+	return keys
 }

@@ -25,66 +25,82 @@
 package kvl
 
 import (
-	"io"
 	"fmt"
+	"io"
 	"time"
 )
 
 const (
-	ConsoleTimeFormat = "[2006-01-02 15:04:05] "
+	ConsoleTimeFormat  = "[2006-01-02 15:04:05]"
+	invalidMessageType = "(message not printable)"
 )
 
 var (
-	skipKeys = map[string]bool {
+	skipKeys = map[string]bool{
 		StdMessageKey: true,
-		StdTimeKey: true,
+		StdTimeKey:    true,
 	}
 )
 
 // ConsoleFormatter produces human-readable log lines and sends them to a Sink.
-// If Sink is not set, nothing will be logged.
-// If the PrintTime flag is true and a "time" key is present, it will be logged
-// at the start of each log line, in the format given by ConsoleTimeFormat.
-// If the PrintKeys flag is true and additional keys besides "message" and
-// "time" are present, the will be logged after the message, separated by pipe characters: |
+//
+// If the PrintTime flag is set and StdTimeKey is present, the key's contents
+// will be logged at the start of each line, followed by a space.
+// If it is present but a time.Time object, it will be formatted according
+// to ConsoleTimeFormat.
+// If it is not present, nothing will be printed.
+//
+// If the PrintKeys flag is true and additional keys besides StdMessageKey and
+// StdTimeKey are present, they will be logged after the message, separated
+// by pipe characters: |
 type ConsoleFormatter struct {
-	// Sink is the output sink for this formatter.
-	Sink io.Writer
-	// PrintTime determines if each log will be prepended with the current date and time.
+	// PrintTime determines if each log will be prepended with date and time.
 	PrintTime bool
 	// PrintKeys determines if key-value pairs will be printed after the message.
 	PrintKeys bool
+	// SortKeys determines if keys should be sorted alphabetically.
+	SortKeys bool
 }
 
-func (formatter *ConsoleFormatter) Logkv(kv map[string]interface{}) {
-	if formatter.Sink != nil {
-		var line string
-		if formatter.PrintTime {
-			kt, ok := kv[StdTimeKey]
-			if ok {
-				t, ok := kt.(time.Time)
-				if ok {
-					line += t.Format(ConsoleTimeFormat)
-				}
-			}
-		}
-		km, ok := kv[StdMessageKey]
-		if ok {
-			m, ok := km.(string)
-			if ok {
-				line += m
-			}
-		}
-		if formatter.PrintKeys {
-			// TODO sort keys first?
-			for k, v := range kv {
-				// skip if this is one of the keys with special meaning
-				if _, ok := skipKeys[k]; !ok {
-					line += fmt.Sprintf(" | %s: %v", k, v)
-				}
-			}
-		}
-		line += "\n"
-		formatter.Sink.Write([]byte(line))
+func printKey(line *string, k string, v interface{}) {
+	// skip if this is one of the keys with special meaning
+	if _, ok := skipKeys[k]; !ok {
+		*line += fmt.Sprintf(" | %s: %v", k, v)
 	}
+}
+
+func (formatter *ConsoleFormatter) Formatd(dict map[string]interface{}, sink io.Writer) {
+	var line string
+	if formatter.PrintTime {
+		switch t := dict[StdTimeKey].(type) {
+		case string:
+			line += t
+			line += " "
+		case time.Time:
+			line += t.Format(ConsoleTimeFormat)
+			line += " "
+		default:
+			// pass
+			//line += time.Now().Format(ConsoleTimeFormat)
+		}
+	}
+	switch m := dict[StdMessageKey].(type) {
+	case string:
+		line += m
+	default:
+		line += invalidMessageType
+	}
+	if formatter.PrintKeys {
+		if formatter.SortKeys {
+			for _, k := range OrderedStringKeys(dict) {
+				printKey(&line, k, dict[k])
+			}
+		} else {
+			for k, v := range dict {
+				printKey(&line, k, v)
+			}
+		}
+	}
+	line += "\n"
+	sink.Write([]byte(line))
 }

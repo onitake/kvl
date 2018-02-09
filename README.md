@@ -5,7 +5,7 @@ A light-weight Go logging package.
 ## Key Features
 
 * Light-weight
-* Highly extensible
+* Extensible
 * No dependencies on other packages
 * Produces machine- and human-readable logs
 
@@ -22,38 +22,45 @@ logger := kvl.NewStdLog()
 logger.Print("Welcome to KeyValueLogger!")
 logger.Printf("A float value: %f", 1.0)
 logger.Printkv("message", "Bottles on the wall", "count", 99, "content", "beer")
+logger.Printm(map[string]interface{}{"message": "Take one down", "pass": "around"})
 ```
 ```console
 [2006-01-02 15:04:05] Welcome to KeyValueLogger!
 [2006-01-02 15:04:06] A float value: 1.0
-[2006-01-02 15:04:08] bottles on the wall | count: 99 | content: beer
+[2006-01-02 15:04:08] Bottles on the wall | count: 99 | content: beer
+[2006-01-02 15:04:08] Take one down | pass: around
 ```
 
-For log-shipping, JSON is more useful:
+For machine processing, JSON is more useful:
 ```go
-jsonlogger := kvl.NewJsonLog()
+jsonlogger := kvl.NewStdJsonLog()
 logger.Print("Welcome to KeyValueLogger!")
 logger.Printf("A float value: %f", 1.0)
 logger.Printkv("message", "Bottles on the wall", "count", 99, "content", "beer")
+logger.Printm(map[string]interface{}{"message": "Take one down", "pass": "around"})
 ```
 ```json
 {"time":"2006-01-02T15:04:05Z07:00","message":"Welcome to KeyValueLogger!"}
 {"time":"2006-01-02T15:04:06Z07:00","message":"A float value: 1.0"}
-{"time":"2006-01-02T15:04:08Z07:00","message":"bottles on the wall","count":99,"content":"beer"}
+{"time":"2006-01-02T15:04:08Z07:00","message":"Bottles on the wall","count":99,"content":"beer"}
+{"time":"2006-01-02T15:04:09Z07:00","message":"Take one down","pass":"around"}
 ```
 
-## Mix, Match + Extend
+## Extend
 
-Each logger is more than just a single class handling all the work:
-Instead, several components are tied together to form a processing chain.
+The core of a logger serves as a skeleton for Frontends, Filters, Formatters
+and Sinks. Everything is extensible.
 
-These components can be divided into four categories:
-Frontends, Filters, Formatters and Sinks.
+For example, the Std logger family provides convenient Print* functions
+as a Frontend for application programs.
+Filters can alter data or add additional information.
+Formatters turn dictionaries into byte strings, and Sinks send the result to
+a socket, file or other output device.
 
-Several ready-to-use loggers are defined in [convenience.go](convenience.go),
-they can be used as-is or serve as a starting point for your own loggers.
+See [convenience.go](convenience.go) for examples, or use the Std loggers as-is.
 
-The various interfaces you need to implement are declared in [logger.go](logger.go).
+The core logger and the interfaces provided by Filters and Formatters
+is defined in [logger.go](logger.go).
 
 ### Frontends
 
@@ -63,8 +70,8 @@ There are no specific requirements on what the API should look like - it can be
 anything from a simple passthrough implementation of the Filter interface to
 a drop-in replacement for another logger.
 
-After preprocessing, the Frontend should pack its output into a map
-and send it to a Filter. See [simple.go](simple.go) for an example.
+Frontend classes should extend the core Logger class and use the Printd
+function to send a dictionary to the log.
 
 ### Filters
 
@@ -75,8 +82,7 @@ out certain message or format values in specific ways.
 For example, one Filter could interpret a key 'level' as the
 log level and drop messages below a certain threshold.
 
-Filters should implement the Filter interface and send their output to another
-Filter.
+Filters should implement the Filter interface and modify information in-place.
 
 ### Formatters
 
@@ -84,22 +90,14 @@ A Formatter processes log messages from a Filter or Frontend into a certain
 output format.
 
 It serves as the glue point between a Logger and the environment, so it should
-implement the Filter interface and send its output to a Sink.
+act like a Filter, but but send its output to a sink instead.
 
 ### Sinks
 
-Ultimately, all data needs to end up somewhere (or be discarded).
-This is where Sinks come in.
+Once the Formatter has processed data, the result will be sent through an I/O
+channel, to a remote server or simply be written to Stdout.
 
-Once the Formatter has processed its data, it will send it through an I/O
-channel, to a remote server or simply write to Stdout.
-
-For most purposes this is best abstracted by the `io.Writer` interface.
-It is used by many standard APIs and can be implemented easily for a custom
-log destination.
-
-If `io.Writer` does not serve your purpose sufficiently, you can also
-write a custom Formatter that sends its data to a different type of Sink.
+This makes `io.Writer` interface a natural candidate for such a sink.
 
 ## Copyright + License
 

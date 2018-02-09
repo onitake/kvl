@@ -26,25 +26,40 @@ package kvl
 
 import (
 	"os"
+	"time"
 )
 
 // NewStdLog creates a simple StdOut logger suitable for human consumption.
 // Key-Value pairs are separated by a pipe character: |
 // Each log line is prepended with the current date and time.
-func NewStdLog() *SimpleLogger {
-	return &SimpleLogger{
-		Chain: &ConsoleFormatter{
+func NewStdLog() *StdLogger {
+	return &StdLogger{
+		Logger: Logger{
+			Filters: []Filter{
+				&AddTimeFilter{},
+			},
+			Formatter: &ConsoleFormatter{
+				PrintTime: true,
+				PrintKeys: true,
+				SortKeys:  true,
+			},
 			Sink: os.Stdout,
-			PrintTime: true,
-			PrintKeys: true,
 		},
 	}
 }
 
 // NewJsonLog creates a JSON logger that places each message into the
-// 'message' key and adds a 'time' key with the current time in RFC3339 format.
-func NewJsonLog() *SimpleLogger {
-	return &SimpleLogger{
-		Chain: NewJsonFormatter(os.Stdout),
+// StdMessageKey key and adds StdMessageKey with the current time in RFC3339 format.
+func NewJsonLog() *StdLogger {
+	return &StdLogger{
+		Logger: Logger{
+			Filters: []Filter{
+				&AddTimeFilter{
+					TimeFormat: time.RFC3339,
+				},
+			},
+			Formatter: &JsonFormatter{},
+			Sink:      os.Stdout,
+		},
 	}
 }

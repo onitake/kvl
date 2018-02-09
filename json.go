@@ -25,8 +25,8 @@
 package kvl
 
 import (
-	"io"
 	"encoding/json"
+	"io"
 )
 
 const (
@@ -34,22 +34,12 @@ const (
 )
 
 // JsonFormatter formats each log line into JSON and sends it to a Sink.
-type JsonFormatter struct {
-	sink io.Writer
-	encoder *json.Encoder
-}
+type JsonFormatter struct{}
 
-// JsonFormatter creates a new JSON formatter and assigns its Sink.
-// If you ever need to change the Sink, it is best create a new Formatter.
-func NewJsonFormatter(sink io.Writer) *JsonFormatter {
-	return &JsonFormatter{
-		encoder: json.NewEncoder(sink),
-	}
-}
-
-func (formatter *JsonFormatter) Logkv(kv map[string]interface{}) {
-	err := formatter.encoder.Encode(kv)
+func (formatter *JsonFormatter) Formatd(dict map[string]interface{}, sink io.Writer) {
+	encoder := json.NewEncoder(sink)
+	err := encoder.Encode(dict)
 	if err != nil {
-		formatter.sink.Write([]byte(jsonEncodeError))
+		sink.Write([]byte(jsonEncodeError))
 	}
 }

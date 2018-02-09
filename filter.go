@@ -28,34 +28,32 @@ import (
 	"time"
 )
 
-// Filter is the standard interface for a data processor.
-// This interface is also used in Formatters.
-//
-// Note: The log maps sent through this interface may be modified by
-// anything in the chain. Clone them if you need to keep them.
-// Data will not be modified, however, so a deep copy is not necessary.
-type Filter interface {
-	// Logkv accepts key-value maps, processes them and sends them to the next
-	// Filters or Formatters in the chain.
-	// Or, in the case of a Formatter, to a log Sink.
-	// This function may modify the map, but not its values.
-	Logkv(kv map[string]interface{})
-}
-
-// AddTimeFilter adds the key "time" with the current time
-// and sends the dictionary to the next filter in the chain.
-// If a "time" is already present, it will not be modified.
+// AddTimeFilter adds StdTimeKey, containing the current local time as
+// a time.Time object.
+// If TimeFormat is set, the current time will be formatted according to
+// this format.
+// If StdTimeKey is already present and a string, it will not be modified.
+// If it is present but a time.Time object and TimeFormat is set, it
+// will be formatted according to this format.
+// If it is present but of a different type, it will be treated like it
+// wasn't present.
 type AddTimeFilter struct {
-	Chain Filter
+	TimeFormat string
 }
 
-func (filter *AddTimeFilter) Logkv(kv map[string]interface{}) {
-	if filter.Chain != nil {
-		// add the curent time
-		if _, ok := kv[StdTimeKey]; !ok {
+func (filter *AddTimeFilter) Filterd(kv map[string]interface{}) {
+	switch t := kv[StdTimeKey].(type) {
+	case string:
+		// pass
+	case time.Time:
+		if filter.TimeFormat != "" {
+			kv[StdMessageKey] = t.Format(filter.TimeFormat)
+		}
+	default:
+		if filter.TimeFormat != "" {
+			kv[StdMessageKey] = time.Now().Format(filter.TimeFormat)
+		} else {
 			kv[StdMessageKey] = time.Now()
 		}
-		// pass the map on
-		filter.Chain.Logkv(kv)
 	}
 }
