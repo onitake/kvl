@@ -34,16 +34,18 @@ import (
 // Each log line is prepended with the current date and time.
 func NewStdLog() *StdLogger {
 	return &StdLogger{
-		Logger: Logger{
+		Logger: &MultiFilter{
 			Filters: []Filter{
 				&AddTimeFilter{},
 			},
-			Formatter: &ConsoleFormatter{
-				PrintTime: true,
-				PrintKeys: true,
-				SortKeys:  true,
+			Logger: &Logger{
+				Formatter: &ConsoleFormatter{
+					PrintTime: true,
+					PrintKeys: true,
+					SortKeys:  true,
+				},
+				Sink: os.Stdout,
 			},
-			Sink: os.Stdout,
 		},
 	}
 }
@@ -52,14 +54,16 @@ func NewStdLog() *StdLogger {
 // StdMessageKey key and adds StdMessageKey with the current time in RFC3339 format.
 func NewJsonLog() *StdLogger {
 	return &StdLogger{
-		Logger: Logger{
+		Logger: &MultiFilter{
 			Filters: []Filter{
 				&AddTimeFilter{
 					TimeFormat: time.RFC3339,
 				},
 			},
-			Formatter: &JsonFormatter{},
-			Sink:      os.Stdout,
+			Logger: &Logger{
+				Formatter: &JsonFormatter{},
+				Sink:      os.Stdout,
+			},
 		},
 	}
 }

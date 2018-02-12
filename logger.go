@@ -36,16 +36,13 @@ const (
 	// StdTimeKey is the default key to use for timestamps.
 	// Type: time.Time
 	StdTimeKey = "time"
-	// filterListAllocation is the default length of the filter list, and
-	// its growth.
-	filterListAllocation = 10
 )
 
 // Filter is the standard interface for a data processor.
 type Filter interface {
 	// Printd accepts dictionaries and processes them.
 	// This function should modify the map in-place.
-	Filterd(dict map[string]interface{})
+	Printd(dict map[string]interface{})
 }
 
 // Formatter is the standard interface for an output generator.
@@ -59,9 +56,6 @@ type Formatter interface {
 // Its interface is very basic, you should extend it or use one of the Std
 // loggers instead.
 type Logger struct {
-	// Filters is a list of filters that do additional processing on
-	// each log line.
-	Filters []Filter
 	// Formatter is a Formatter that writes processed output into a Sink.
 	// If unset, it simply converts the value StdMessageKey to a byte
 	// string and writes it to the Sink.
@@ -71,28 +65,8 @@ type Logger struct {
 	Sink io.Writer
 }
 
-// AddFilter appends a filter to the end of the list.
-func (logger *Logger) AddFilter(filter Filter) {
-	// grow if necessary
-	if len(logger.Filters)+1 >= cap(logger.Filters) {
-		filters := make([]Filter, len(logger.Filters), len(logger.Filters)+filterListAllocation)
-		copy(filters, logger.Filters)
-		logger.Filters = filters
-	}
-	logger.Filters = append(logger.Filters, filter)
-}
-
-// ClearFilters clears the filter list.
-func (logger *Logger) ClearFilters() {
-	// allocate with default size
-	logger.Filters = make([]Filter, 0, filterListAllocation)
-}
-
 // Printd sends a dictionary to the log.
 func (logger *Logger) Printd(dict map[string]interface{}) {
-	for _, filter := range logger.Filters {
-		filter.Filterd(dict)
-	}
 	formatter := logger.Formatter
 	if formatter == nil {
 		formatter = &dummyFormatter{}

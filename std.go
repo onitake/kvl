@@ -33,8 +33,14 @@ import (
 //
 // The Print* family of log methods are modeled after log.Logger.
 type StdLogger struct {
-	// Yes, we extend Logger.
-	Logger
+	// Logger is the logger or filter delegate.
+	Logger Filter
+}
+
+func (logger *StdLogger) Printd(dict map[string]interface{}) {
+	if logger.Logger != nil {
+		logger.Logger.Printd(dict)
+	}
 }
 
 // Print outputs each argument on a separate log line.
