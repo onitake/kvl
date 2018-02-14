@@ -53,14 +53,13 @@ type Formatter interface {
 }
 
 // Logger is the kvl logging core.
-// Its interface is very basic, you should extend it or use one of the Std
+// Its interface is very basic, you should extend it or use one of the Std*
 // loggers instead.
 type Logger struct {
-	// Formatter is a Formatter that writes processed output into a Sink.
-	// If unset, it simply converts the value StdMessageKey to a byte
-	// string and writes it to the Sink.
+	// Formatter writes processed output into a Sink.
+	// If unset, the logger simply writes the value StdMessageKey into the sink.
 	Formatter Formatter
-	// Sink is an output sink.
+	// Sink is where the output will end up.
 	// Defaults to os.Stdout if unset.
 	Sink io.Writer
 }

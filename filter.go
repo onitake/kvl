@@ -53,13 +53,13 @@ func (filter *AddTimeFilter) Printd(kv map[string]interface{}) {
 		// pass
 	case time.Time:
 		if filter.TimeFormat != "" {
-			kv[StdMessageKey] = t.Format(filter.TimeFormat)
+			kv[StdTimeKey] = t.Format(filter.TimeFormat)
 		}
 	default:
 		if filter.TimeFormat != "" {
-			kv[StdMessageKey] = time.Now().Format(filter.TimeFormat)
+			kv[StdTimeKey] = time.Now().Format(filter.TimeFormat)
 		} else {
-			kv[StdMessageKey] = time.Now()
+			kv[StdTimeKey] = time.Now()
 		}
 	}
 }
@@ -85,7 +85,7 @@ func (filter *MergeFilter) Printd(kv map[string]interface{}) {
 // to a Logger (or another filter).
 type MultiFilter struct {
 	Filters []Filter
-	Logger Filter
+	Logger  Filter
 }
 
 func (filter *MultiFilter) Printd(kv map[string]interface{}) {
